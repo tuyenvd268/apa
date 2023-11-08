@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 . ./path.sh
 
-python gop.py
+python align.py
+# python gop.py
