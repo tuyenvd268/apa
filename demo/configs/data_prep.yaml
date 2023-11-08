@@ -1,0 +1,12 @@
+libri-models-path: "kaldi/"
+torch-models-path: "kaldi/torch"
+libri-chain-mdl-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/final.mdl"
+libri-chain-txt-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/final.txt"
+transition-model-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/final.mdl"
+tree-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/tree"
+libri-phones-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/phones.txt"
+
+disambig-path: "kaldi/data/lang_test_tgsmall/phones/disambig.int"
+word-boundary-path: "kaldi/data/lang_test_tgsmall/phones/word_boundary.int"
+lang-graph-path: "kaldi/data/lang_test_tgsmall/L.fst"
+words-path: "kaldi/data/lang_test_tgsmall/words.txt"
