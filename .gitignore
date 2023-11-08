@@ -4,3 +4,4 @@ data
 prep_data
 kaldi
 pretrained
+__pycache__
