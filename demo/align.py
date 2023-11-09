@@ -20,7 +20,7 @@ import yaml
 import sys
 import os
 
-from src.acoustic_models import FTDNNAcoustic
+from src.acoustic_model import FTDNNAcoustic
 
 def load_config(path):
     config_fh = open(path, "r")
@@ -149,14 +149,15 @@ class Aligner(object):
             feats_scp_path=self.feats_scp_path
         )
 
-        self.run_align(
+        alignments = self.run_align(
             prob_path=self.prob_path, 
             align_path=self.align_path)
+
+        return alignments
 
     def run_align(self, prob_path, align_path):
         prob_wspec= f"ark:{prob_path}"
         align_file = open(align_path,"w+")
-        align_feature_file = open(self.align_feature_path,"w+")
 
         text_df = pd.read_csv(
             self.text_path, names=["id", "text"], 
@@ -168,7 +169,10 @@ class Aligner(object):
         ivectors_reader = RandomAccessMatrixReader(ivectors_rspec)
         prob_writer = DoubleMatrixWriter(prob_wspec)
 
-        for line in tqdm(open(self.wav_scp_path, "r").readlines(), desc="Align"):
+        wav_list_paths = open(self.wav_scp_path, "r").readlines()
+        assert len(wav_list_paths) == 1
+        
+        for line in tqdm(wav_list_paths, desc="Align"):
             logid, _ = line.split("\t")
             text = text_df[int(logid)].upper()
 
@@ -191,12 +195,10 @@ class Aligner(object):
 
             phone_alignment = self.aligner.to_phone_alignment(output["alignment"], self.phones)
 
-            json_obj = json.dumps(phone_alignment)
-            align_feature_file.write(f'{logid}\t{json_obj}\n')
-
         prob_writer.close()
-        align_feature_file.close()
         align_file.close()
+
+        return phone_alignment
 
 if __name__ == "__main__":
     configs = load_config("config.yaml")

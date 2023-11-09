@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 . ./path.sh
 
-python main.py
+python force_align_gop_api.py

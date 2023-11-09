@@ -262,11 +262,8 @@ class GOP(object):
         df_alignments = pd.DataFrame.from_dict(df_alignments)
 
         gop_dict = self.compute_gop(prob_path=prob_path, df_alignments=df_alignments)
-
-        arr_bytes = gop_dict["gop-features"].tobytes()
-        gop_dict["gop-features"] = base64.b64encode(arr_bytes).decode('utf-8')
-
-        return gop_dict
+        
+        return gop_dict["gop-features"], gop_dict["phones"]
 
     def compute_gop(self, prob_path, df_alignments):
 
@@ -288,6 +285,7 @@ class GOP(object):
                     number_senones=6024, 
                     batch_size=len(df_scores_batch), 
                     output_gop_dict=gop_dict)
+
         return gop_dict["8888"]
     
 def load_config(path):

@@ -1,0 +1,6 @@
+embed-dim: 32
+num-heads: 1
+depth: 3
+input-dim: 851
+num-phone: 62
+max-length: 128
