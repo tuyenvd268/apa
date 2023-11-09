@@ -1,3 +1,6 @@
+from flask import (
+    Flask, request, jsonify
+)
 import librosa
 import torch
 import yaml
@@ -8,6 +11,8 @@ from src.score_model import GOPT
 from src.wavlm_model import (
     WavLM, WavLMConfig
 )
+
+app = Flask(__name__)
 
 def load_config(path):
     config_fh = open(path, "r")
@@ -68,6 +73,9 @@ class Score_Model():
             configs=configs,
             gopt_ckpt_path=gopt_ckpt_path,
             wavlm_ckpt_path=wavlm_ckpt_path)
+            
+        self.gopt_model.eval()
+        self.wavlm_model.eval()
 
         self.phone_dict = json.load(open(phone_dict_path, "r"))
 
@@ -116,6 +124,29 @@ class Score_Model():
 
         return features[0:len(phonemes)]
 
+@app.route('/scoring', methods=['POST'])
+def scoring_endpoint():
+    """
+        api endpoint
+    """
+    inputs = request.get_json(silent=True)
+
+    print("Hello")
+    waveform = inputs["waveform"]
+    alignments = inputs["alignments"]
+    gop_features = inputs["gop_features"]
+    phonemes = inputs["phonemes"]
+
+    utterance_scores, phone_scores, word_scores = \
+        score_model.run(waveform, alignments, gop_features)
+
+    return {
+        "utterance_scores": utterance_scores.tolist(),
+        "phone_scores": phone_scores.tolist(),
+        "word_scores": word_scores.tolist()
+    }
+
+
 if __name__ == "__main__":
     configs = load_config("configs/model.yaml")
 
@@ -129,16 +160,18 @@ if __name__ == "__main__":
         gopt_ckpt_path=gopt_ckpt_path, 
         wavlm_ckpt_path=wavlm_ckpt_path)
 
-    inputs = json.load(open("/data/codes/prep_ps_pykaldi/inputs.json"))
-    waveform, sample_rate = librosa.load("/data/codes/prep_ps_pykaldi/demo/wav/test.wav", sr=16000)
+    # inputs = json.load(open("/data/codes/prep_ps_pykaldi/inputs.json"))
+    # waveform, sample_rate = librosa.load("/data/codes/prep_ps_pykaldi/demo/wav/test.wav", sr=16000)
 
-    gop_features = inputs["gop_features"]
-    alignments = inputs["alignments"]
-    phonemes = inputs["phonemes"]
+    # gop_features = inputs["gop_features"]
+    # alignments = inputs["alignments"]
+    # phonemes = inputs["phonemes"]
 
-    utterance_scores, phone_scores, word_scores = \
-        score_model.run(waveform, alignments, gop_features)
+    # utterance_scores, phone_scores, word_scores = \
+    #     score_model.run(waveform, alignments, gop_features)
 
-    print(utterance_scores.shape)
-    print(phone_scores.shape)
-    print(word_scores.shape)
+    # print(utterance_scores.shape)
+    # print(phone_scores.shape)
+    # print(word_scores.shape)
+
+    app.run(host="0.0.0.0", debug=False, port=6868)

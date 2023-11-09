@@ -6,3 +6,4 @@ kaldi
 pretrained
 __pycache__
 *.wav
+inputs.json
