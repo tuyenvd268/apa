@@ -1,4 +1,14 @@
+data-dir: "data/"
+exp-dir: "exp/"
+
+audio-path: 'wav/test.wav'
+prob-path: 'exp/prob.ark'
+gop-path: 'exp/gop.pkl'
+align-path: 'exp/align.out'
+trans-dir: 'exp/'
+
 kaldi-models-path: "kaldi/"
+conf-path: "kaldi/conf"
 torch-models-path: "kaldi/torch"
 kaldi-chain-mdl-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/final.mdl"
 kaldi-chain-txt-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/final.txt"
@@ -10,5 +20,7 @@ disambig-path: "kaldi/data/lang_test_tgsmall/phones/disambig.int"
 word-boundary-path: "kaldi/data/lang_test_tgsmall/phones/word_boundary.int"
 lang-graph-path: "kaldi/data/lang_test_tgsmall/L.fst"
 words-path: "kaldi/data/lang_test_tgsmall/words.txt"
+phones-pure-path: "kaldi/data/phones/phones-list.txt"
+phone-to-pure-phone-path: "kaldi/data/phones/phone-to-pure-phone.int"
 
 acoustic-model-path: "kaldi/torch/acoustic_model.pt"

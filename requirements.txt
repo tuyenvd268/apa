@@ -17,3 +17,4 @@ wandb
 git+https://github.com/Legisign/Praat-textgrids
 jupyter
 seaborn
+flask

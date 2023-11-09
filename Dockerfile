@@ -1,10 +1,9 @@
-# Dockerfile for building PyKaldi image from Ubuntu 18.04 image
 FROM ubuntu:18.04
 
-# Install necessary system packages
-RUN apt-get update \
-    && apt-get install -y \
-    python3 \
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y python3 \
     python3-pip \
     python2.7 \
     autoconf \
@@ -24,26 +23,35 @@ RUN apt-get update \
     wget \
     zlib1g-dev
 
-# Make python3 default
 RUN ln -s /usr/bin/python3 /usr/bin/python \
     && ln -s /usr/bin/pip3 /usr/bin/pip
 
-# Install necessary Python packages
-RUN pip install --upgrade pip \
-    numpy \
-    setuptools \
-    pyparsing \
-    jupyter \
+RUN pip install setuptools
+RUN pip install --upgrade setuptools
+
+RUN pip install --upgrade pip \ 
+    numpy \ 
+    pyparsing \ 
+    jupyter \ 
     ninja
 
-# Copy pykaldi directory into the container
-COPY . /pykaldi
+RUN git clone https://github.com/pykaldi/pykaldi.git
 
-# Install Protobuf, CLIF, Kaldi and PyKaldi
+RUN apt-get install gfortran -y
+
 RUN cd /pykaldi/tools \
-    && ./check_dependencies.sh \
-    && ./install_protobuf.sh \
-    && ./install_clif.sh \
-    && ./install_kaldi.sh \
-    && cd .. \
-    && python setup.py install
+   && ./check_dependencies.sh \
+   &&  ./install_protobuf.sh \
+   &&  ./install_clif.sh 
+
+RUN git clone -b pykaldi_02 https://github.com/pykaldi/kaldi.git /pykaldi/tools/kaldi \
+    && cd /pykaldi/tools/kaldi/tools \
+    && ./extras/install_mkl.sh
+
+RUN cd /pykaldi/tools \
+    &&  ./install_kaldi.sh 
+
+RUN cd /pykaldi \
+    && KALDI_DIR=/pykaldi/tools/kaldi python setup.py install
+
+EXPOSE 6666

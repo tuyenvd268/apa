@@ -5,3 +5,4 @@ prep_data
 kaldi
 pretrained
 __pycache__
+*.wav

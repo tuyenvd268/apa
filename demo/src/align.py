@@ -21,8 +21,18 @@ import os
 
 from src.acoustic_models import FTDNNAcoustic
 
-def prepare_data_in_kaldi_format(data_dir, text, wav_path):
-    ID = 8888
+def load_config(path):
+    config_fh = open(path, "r")
+    config_dict = yaml.safe_load(config_fh)
+    return config_dict
+
+def load_ivector_period_from_conf(conf_path):
+    conf_fh = open(conf_path + '/ivector_extractor.conf', 'r')
+    ivector_period_line = conf_fh.readlines()[1]
+    ivector_period = int(ivector_period_line.split('=')[1])
+    return ivector_period
+
+def prepare_data_in_kaldi_format(data_dir, text, wav_path, ID=8888):
     with open(f'{data_dir}/wav.scp', "w", encoding="utf-8") as wavscp_file:
         wavscp_file.write(f'{ID}\t{wav_path}\n')
 
@@ -39,12 +49,14 @@ def prepare_data_in_kaldi_format(data_dir, text, wav_path):
 
 def log_alignments(aligner, phones, alignment, logid, align_output_fh):
     phone_alignment = aligner.to_phone_alignment(alignment, phones)
+    
     transition_lists = []
     for phone, start_time, duration in phone_alignment:
         transitions_for_phone = alignment[start_time : (start_time + duration)]
         transition_lists.append(transitions_for_phone)
     align_output_fh.write(logid + ' phones '      + str(phone_alignment)  + '\n')
     align_output_fh.write(logid + ' transitions ')
+
     for transition_list in transition_lists:
         align_output_fh.write(str(transition_list) + ' ')
     align_output_fh.write('\n')
@@ -61,19 +73,13 @@ def extract_features_using_kaldi(conf_path, wav_scp_path, spk2utt_path, mfcc_pat
         'ivector-extract-online2 --config='+ conf_path +'/ivector_extractor.conf ark:'+ spk2utt_path + '\
             scp:' + feats_scp_path + ' ark:' + ivectors_path)
 
-def load_ivector_period_from_conf(conf_path):
-    conf_fh = open(conf_path + '/ivector_extractor.conf', 'r')
-    ivector_period_line = conf_fh.readlines()[1]
-    ivector_period = int(ivector_period_line.split('=')[1])
-    return ivector_period
-
-def align(config_dict, conf_path, prob_path, align_path, align_v1_path, wav_list_path, text_path, ivectors_path, mfcc_path):
+def run_align(config_dict, conf_path, prob_path, align_path, align_v1_path, wav_list_path, text_path, ivectors_path, mfcc_path):
     aligner, phones, wb_info, acoustic_model = initialize(config_dict)
     ivector_period = load_ivector_period_from_conf(conf_path)
 
     prob_wspec= f"ark:| copy-feats --compress=true ark:- ark:{prob_path}"
     align_file = open(align_path,"w+")
-    align_v1_file = open(align_v1_path,"w+")
+    align_feature_file = open(align_v1_path,"w+")
 
     text_df = pd.read_csv(text_path, names=["id", "text"], sep="\t", index_col=0)
     text_df = text_df.to_dict()["text"]
@@ -106,26 +112,21 @@ def align(config_dict, conf_path, prob_path, align_path, align_v1_path, wav_list
         phone_alignment = aligner.to_phone_alignment(output["alignment"], phones)
 
         json_obj = json.dumps(phone_alignment)
-        align_v1_file.write(f'{logid}\t{json_obj}\n')
+        align_feature_file.write(f'{logid}\t{json_obj}\n')
 
     prob_writer.close()
     align_v1_file.close()
     align_file.close()
 
-def load_config(path):
-    config_fh = open(path, "r")
-    config_dict = yaml.safe_load(config_fh)
-    return config_dict
-
 def initialize(config_dict):
-    acoustic_model_path = 'kaldi/torch/acoustic_model.pt'
+    acoustic_model_path = config_dict['acoustic-model-path']
     transition_model_path = config_dict['transition-model-path']
     tree_path = config_dict['tree-path']
     disam_path = config_dict['disambig-path']
     word_boundary_path = config_dict['word-boundary-path']
     lang_graph_path = config_dict['lang-graph-path']
     words_path = config_dict['words-path']
-    phones_path = config_dict['libri-phones-path']
+    phones_path = config_dict['kaldi-phones-path']
         
     aligner = MappedAligner.from_files(
         transition_model_path, tree_path, 
@@ -144,14 +145,17 @@ def initialize(config_dict):
     return aligner, phones, wb_info, acoustic_model
 
 
-if __name__ == "__main__":
-    config_dict = load_config("configs/data_prep.yaml")
+class Aligner(object):
+    def __init__(self, configs):
+        pass
 
-    data_dir = "data/"
+if __name__ == "__main__":
+    config_dict = load_config("config.yaml")
+    data_dir = config_dict["data-dir"]
+    exp_dir = config_dict["exp-dir"]
+
     wav_path = "wav/1403449.wav"
     text = "CHILLY"
-
-    os.system(". ./path.sh")
 
     prepare_data_in_kaldi_format(
         data_dir=data_dir,
@@ -159,12 +163,13 @@ if __name__ == "__main__":
         text=text
     )
 
-    conf_path = "../kaldi/conf"
-    wav_scp_path = "data/wav.scp"
-    spk2utt_path = "data/spk2utt"
-    mfcc_path = "data/mfcc.ark"
-    ivectors_path = "data/ivectors.ark"
-    feats_scp_path = "data/feats.scp"
+    conf_path = "kaldi/conf"
+    wav_scp_path = f'{data_dir}/wav.scp'
+    text_path = f'{data_dir}/text'
+    spk2utt_path = f'{data_dir}/spk2utt'
+    mfcc_path = f'{data_dir}/mfcc.ark'
+    ivectors_path = f'{data_dir}/ivectors.ark'
+    feats_scp_path = f'{data_dir}/feats.scp'
 
     extract_features_using_kaldi(
         conf_path=conf_path, 
@@ -175,17 +180,11 @@ if __name__ == "__main__":
         feats_scp_path=feats_scp_path
     )
 
-    wav_scp_path = 'data/wav.scp'
-    text_path = 'data/text'
-    mfcc_path = 'data/mfcc.ark'
-    ivectors_path = 'data/ivectors.ark'
+    prob_path = f'{exp_dir}/output.ark'
+    align_path = f'{exp_dir}/align.out'
+    align_v1_path = f'{exp_dir}/output.ali'
 
-    prob_path = 'exp/output.ark'
-    align_path = 'exp/align.out'
-    align_v1_path = 'exp/output.ali'
-
-
-    align(
+    run_align(
         config_dict=config_dict, 
         conf_path=conf_path, 
         prob_path=prob_path, 
