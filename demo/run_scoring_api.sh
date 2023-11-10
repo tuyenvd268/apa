@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 . ./path.sh
 
-python scoring_api.py
+python3.9 scoring_api.py

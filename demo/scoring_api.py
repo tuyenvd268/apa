@@ -1,6 +1,7 @@
 from flask import (
     Flask, request, jsonify
 )
+from time import time
 import librosa
 import torch
 import yaml
@@ -55,7 +56,7 @@ def extract_feature(alignment, features):
 
     indices[indices==-1] = indices.max() + 1
 
-    indices = torch.nn.functional.one_hot(indices.long(), num_classes=int(indices.max().item())+1)
+    indices = torch.nn.functional.one_hot(indices.long(), num_classes=int(indices.max().item())+1).cuda()
     indices = indices / indices.sum(0, keepdim=True)
     
     if features.shape[0] != indices.shape[0]:
@@ -69,13 +70,14 @@ class Score_Model():
         wavlm_ckpt_path, phone_dict_path):
         self.configs = configs
 
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.gopt_model, self.wavlm_model, self.wavlm_config = init_models(
             configs=configs,
             gopt_ckpt_path=gopt_ckpt_path,
             wavlm_ckpt_path=wavlm_ckpt_path)
-            
-        self.gopt_model.eval()
-        self.wavlm_model.eval()
+
+        self.gopt_model.eval().to(self.device)
+        self.wavlm_model.eval().to(self.device)
 
         self.phone_dict = json.load(open(phone_dict_path, "r"))
 
@@ -84,18 +86,21 @@ class Score_Model():
         phone_ids = [self.phone_dict[phone] for phone in phones]
         durations = [round(phone[2] * 0.02, 4) for phone in alignments]
 
-        phone_ids = torch.tensor(phone_ids).unsqueeze(0)
-        waveform = torch.tensor(waveform).unsqueeze(0)
-        gop_features = torch.tensor(gop_features).unsqueeze(0)
-        durations = torch.tensor(durations).unsqueeze(0)
+        phone_ids = torch.tensor(phone_ids).unsqueeze(0).to(self.device)
+        waveform = torch.tensor(waveform).unsqueeze(0).to(self.device)
+        gop_features = torch.tensor(gop_features).unsqueeze(0).to(self.device)
+        durations = torch.tensor(durations).unsqueeze(0).to(self.device)
 
         wavlm_features = self.run_extract_feature(waveform, alignments)
-
         utterance_scores, phone_score, word_scores = self.run_scoring(
             wavlm_features=wavlm_features.unsqueeze(0), 
             gop_features=gop_features, 
             durations=durations.unsqueeze(-1),
             phone_ids=phone_ids)
+
+        utterance_scores = utterance_scores.squeeze(0).squeeze(-1).cpu() * 50
+        phone_score = phone_score.squeeze(0).squeeze(-1).cpu() * 50
+        word_scores = word_scores.squeeze(0).squeeze(-1).cpu() * 50
 
         return utterance_scores, phone_score, word_scores
 
@@ -131,7 +136,6 @@ def scoring_endpoint():
     """
     inputs = request.get_json(silent=True)
 
-    print("Hello")
     waveform = inputs["waveform"]
     alignments = inputs["alignments"]
     gop_features = inputs["gop_features"]
@@ -139,13 +143,14 @@ def scoring_endpoint():
 
     utterance_scores, phone_scores, word_scores = \
         score_model.run(waveform, alignments, gop_features)
-
-    return {
+    
+    result = {
         "utterance_scores": utterance_scores.tolist(),
         "phone_scores": phone_scores.tolist(),
         "word_scores": word_scores.tolist()
     }
 
+    return jsonify(result)
 
 if __name__ == "__main__":
     configs = load_config("configs/model.yaml")
@@ -159,19 +164,5 @@ if __name__ == "__main__":
         phone_dict_path=phone_dict_path,
         gopt_ckpt_path=gopt_ckpt_path, 
         wavlm_ckpt_path=wavlm_ckpt_path)
-
-    # inputs = json.load(open("/data/codes/prep_ps_pykaldi/inputs.json"))
-    # waveform, sample_rate = librosa.load("/data/codes/prep_ps_pykaldi/demo/wav/test.wav", sr=16000)
-
-    # gop_features = inputs["gop_features"]
-    # alignments = inputs["alignments"]
-    # phonemes = inputs["phonemes"]
-
-    # utterance_scores, phone_scores, word_scores = \
-    #     score_model.run(waveform, alignments, gop_features)
-
-    # print(utterance_scores.shape)
-    # print(phone_scores.shape)
-    # print(word_scores.shape)
 
     app.run(host="0.0.0.0", debug=False, port=6868)
