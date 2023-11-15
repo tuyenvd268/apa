@@ -126,6 +126,7 @@ def run(transcript, wav_path):
     metadata = pd.concat([alignments, scores], axis=1)
     metadata = get_word_scores(metadata)
     metadata = get_ipa_from_arpabet(metadata)
+    print(metadata)
 
     result = post_process(metadata, transcript)
 
@@ -150,4 +151,4 @@ def scoring_endpoint():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False, port=9999)
+    app.run(host="0.0.0.0", debug=False, port=3333)

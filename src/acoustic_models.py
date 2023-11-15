@@ -31,10 +31,10 @@ class OutputLayer(nn.Module):
         return x
 
 class FTDNNAcoustic(nn.Module):
-    def __init__(self, device_name='cpu'):
+    def __init__(self, num_senones=6112, device_name='cpu'):
         super(FTDNNAcoustic, self).__init__()
         self.ftdnn        = FTDNN(device_name=device_name)
-        self.output_layer = OutputLayer(256, 1536, 256, 6024)
+        self.output_layer = OutputLayer(256, 1536, 256, num_senones)
 
     def forward(self, x):
 

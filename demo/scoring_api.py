@@ -32,6 +32,7 @@ def init_models(configs, gopt_ckpt_path=None, wavlm_ckpt_path=None):
     if gopt_ckpt_path is not None:
         gopt_state_dict = torch.load(gopt_ckpt_path, map_location="cpu")
         gopt_model.load_state_dict(gopt_state_dict)
+        print(f"###load state dict from {gopt_ckpt_path}")
 
     assert wavlm_ckpt_path is not None
     if wavlm_ckpt_path is not None:
@@ -41,8 +42,9 @@ def init_models(configs, gopt_ckpt_path=None, wavlm_ckpt_path=None):
         wavlm_model = WavLM(wavlm_config)
 
         wavlm_model.load_state_dict(wavlm_state_dict['model'])
+        print(f"###load state dict from {wavlm_ckpt_path}")
 
-    return gopt_model, wavlm_model, wavlm_config
+    return gopt_model.eval(), wavlm_model.eval(), wavlm_config
 
 def extract_feature(alignment, features):
     index = 0
@@ -76,8 +78,8 @@ class Score_Model():
             gopt_ckpt_path=gopt_ckpt_path,
             wavlm_ckpt_path=wavlm_ckpt_path)
 
-        self.gopt_model.eval().to(self.device)
-        self.wavlm_model.eval().to(self.device)
+        self.gopt_model.to(self.device)
+        self.wavlm_model.to(self.device)
 
         self.phone_dict = json.load(open(phone_dict_path, "r"))
 
@@ -101,6 +103,9 @@ class Score_Model():
         utterance_scores = utterance_scores.squeeze(0).squeeze(-1).cpu() * 50
         phone_score = phone_score.squeeze(0).squeeze(-1).cpu() * 50
         word_scores = word_scores.squeeze(0).squeeze(-1).cpu() * 50
+
+        print("###Utt score: ", utterance_scores)
+        print("###Wrd score: ", word_scores)
 
         return utterance_scores, phone_score, word_scores
 
@@ -156,7 +161,7 @@ if __name__ == "__main__":
     configs = load_config("configs/model.yaml")
 
     wavlm_ckpt_path = "/data/codes/prep_ps_pykaldi/pretrained/wavlm-base+.pt"
-    gopt_ckpt_path = "/data/codes/prep_ps_pykaldi/exp/ckpts/model.pt"
+    gopt_ckpt_path = "/data/codes/prep_ps_pykaldi/demo/ckpts-eph=48-mse=0.1187-prep/model.pt"
     phone_dict_path = "/data/codes/prep_ps_pykaldi/resources/phone_dict.json"
     
     score_model = Score_Model(

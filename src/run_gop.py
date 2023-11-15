@@ -223,7 +223,7 @@ def gop_robust_with_matrix(df_scores, df_phones_pure, number_senones, batch_size
         output_gop_dict[logid] = {'gop': gops_r,'phones_pure': phones_pure, 'phones':df_scores.phones.tolist(),'gopt':np.vstack(features)}        
     return output_gop_dict
 
-def compute_gop(gop_path, df_phones_pure, df_alignments, prob_path, utt_list_path, batch_size):
+def compute_gop(gop_path, df_phones_pure, df_alignments, prob_path, utt_list_path, number_senones, batch_size):
     gop_dict = {}
     
     df_scores = df_alignments.transpose()
@@ -236,7 +236,7 @@ def compute_gop(gop_path, df_phones_pure, df_alignments, prob_path, utt_list_pat
             loglikes_batch  = [loglikes, ]
             padded_loglikes = pad_loglikes(loglikes_batch)
             df_scores_batch['p'] = padded_loglikes
-            gop_dict = gop_robust_with_matrix(df_scores_batch, df_phones_pure, 6024, len(df_scores_batch), gop_dict)
+            gop_dict = gop_robust_with_matrix(df_scores_batch, df_phones_pure, number_senones, len(df_scores_batch), gop_dict)
 
     validate_gop_samples_with_utterance_list(gop_dict, utt_list_path)
 
@@ -254,7 +254,7 @@ def validate_gop_samples_with_utterance_list(gop_dict, utt_list_path):
     if utts_in_gop != utt_set:
         raise Exception("ERROR: Keys in gop dictionary do not match utterance list.")
 
-def parallel_compute_gop(phones_path, final_mdl_path, phones_pure_path, phones_to_pure_int_path, gop_dir, prob_dir, align_dir, split_dir, n_split=10):
+def parallel_compute_gop(phones_path, final_mdl_path, phones_pure_path, phones_to_pure_int_path, gop_dir, prob_dir, align_dir, number_senones, split_dir, n_split=10):
     for index in tqdm(range(n_split), desc="GOP"):
         align_path = f'{align_dir}/align.{index}.out'
         prob_path = f'{prob_dir}/output.{index}.ark'
@@ -271,7 +271,7 @@ def parallel_compute_gop(phones_path, final_mdl_path, phones_pure_path, phones_t
         
         compute_gop(
             gop_path, df_phones_pure, df_alignments, 
-            prob_path, wav_list_path, 1)
+            prob_path, wav_list_path, number_senones, 1)
     
     merged_gop = {}
     for path in glob(f'{gop_dir}/gop*'):
@@ -282,19 +282,29 @@ def parallel_compute_gop(phones_path, final_mdl_path, phones_pure_path, phones_t
     pkl.dump(merged_gop, open(merged_gop_path,"wb"))
 
     print(f'saved merged gop to {merged_gop_path}')
-    
+
+def load_config(path):
+    config_fh = open(path, "r")
+    config_dict = yaml.safe_load(config_fh)
+    return config_dict
 
 if __name__ == '__main__':
-    phones_path = 'kaldi/exp/chain_cleaned/tdnn_1d_sp/phones.txt'    
-    final_mdl_path = 'kaldi/exp/chain_cleaned/tdnn_1d_sp/final.mdl'
-    phones_pure_path = 'kaldi/data/phones/phones-list.txt'
-    phones_to_pure_int_path = 'kaldi/data/phones/phone-to-pure-phone.int'
+    config_dict = load_config("configs/config_prep.yaml")
 
-    n_split = 40
-    gop_dir = 'exp/gops'
-    align_dir = 'exp/aligns'
-    prob_dir = 'exp/probs'
-    split_dir = 'data/split'
+    phones_path = config_dict["libri-phones-path"]   
+    final_mdl_path = config_dict["libri-chain-mdl-path"]   
+    phones_pure_path = config_dict["phones-pure-path"]   
+    phones_to_pure_int_path = config_dict["phones-to-pure-int-path"]
+    number_senones = config_dict["num-senones"]
+
+    n_split = config_dict["n-split"]
+    exp_dir = config_dict["exp-dir"]
+    data_dir = config_dict["data-dir"]
+
+    gop_dir = f'{exp_dir}/gops'
+    align_dir = f'{exp_dir}/aligns'
+    prob_dir = f'{exp_dir}/probs'
+    split_dir = f'{data_dir}/split'
 
     parallel_compute_gop(
         phones_path=phones_path, 
@@ -303,5 +313,6 @@ if __name__ == '__main__':
         phones_to_pure_int_path=phones_to_pure_int_path, 
         gop_dir=gop_dir, 
         prob_dir=prob_dir, 
+        number_senones=number_senones,
         align_dir=align_dir, 
         split_dir=split_dir, n_split=n_split)

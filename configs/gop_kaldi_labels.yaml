@@ -1,5 +1,0 @@
-data-dir:                      "data/"
-libri-phones-path:             "libri_models/exp/chain_cleaned/tdnn_1d_sp/phones.txt"
-libri-phones-to-pure-int-path: "phones/kaldi/phone-to-pure-phone.int"
-libri-chain-mdl-path:          "libri_models/exp/chain_cleaned/tdnn_1d_sp/final.mdl"
-phones-list-path:              "phones/kaldi/phones-list.txt"

@@ -200,7 +200,7 @@ def gop_robust_with_matrix(df_scores, df_phones_pure, number_senones, batch_size
         features = []
         for i in range(0, len(transitions)):
             transitions_by_phone = transitions[i]
-            tf = ti + len(transitions_by_phone) - 1     
+            tf = ti + len(transitions_by_phone) - 1
             try:
                 np.seterr(all = "raise") 
                 lpp = sum(np.log(scores_phone_pure[j][ti:tf+1]))/(tf-ti+1)
@@ -233,7 +233,7 @@ class GOP(object):
         self.final_mdl_path = configs["kaldi-chain-mdl-path"]
         self.phones_pure_path = configs["phones-pure-path"]
         self.phones_to_pure_int_path = configs["phone-to-pure-phone-path"]
-
+        self.num_senones = configs["num_senones"]
         self.transition_dir = configs["trans-dir"]
 
         self.df_phones_pure = self.prepare_df_phones_pure()
@@ -282,7 +282,7 @@ class GOP(object):
                 gop_dict = gop_robust_with_matrix(
                     df_scores_batch, 
                     self.df_phones_pure, 
-                    number_senones=6024, 
+                    number_senones=self.num_senones, 
                     batch_size=len(df_scores_batch), 
                     output_gop_dict=gop_dict)
 

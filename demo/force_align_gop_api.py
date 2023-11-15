@@ -89,7 +89,8 @@ def post_process(alignment, gop_features, phones):
 
 
 if __name__ == "__main__":
-    configs = load_config("configs/config.yaml")
+    configs = load_config("configs/config_prep.yaml")
+    # configs = load_config("configs/config_libri.yaml")
 
     aligner = Aligner(configs=configs)
     gop_recipe = GOP(configs=configs)

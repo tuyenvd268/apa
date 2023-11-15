@@ -22,7 +22,7 @@ import os
 from acoustic_models import FTDNNAcoustic
 
 def load_data(data_dir):
-    metadata_path = f'{data_dir}/metadata.csv'
+    metadata_path = f'{data_dir}/info_qt_10_train_metadata.csv'
     wav_dir = f'{data_dir}/wav'
     
     data = pd.read_csv(metadata_path, names=["path", "text"], sep="|")
@@ -99,7 +99,7 @@ def split_data(data, n_split, out_dir):
         save_kaldi_data_format(sub_data, sub_data_dir)
 
 def initialize(config_dict):
-    acoustic_model_path = 'kaldi/torch/acoustic_model.pt'
+    acoustic_model_path = config_dict['acoustic-model-path']
     transition_model_path = config_dict['transition-model-path']
     tree_path = config_dict['tree-path']
     disam_path = config_dict['disambig-path']
@@ -107,6 +107,7 @@ def initialize(config_dict):
     lang_graph_path = config_dict['lang-graph-path']
     words_path = config_dict['words-path']
     phones_path = config_dict['libri-phones-path']
+    num_senones = config_dict['num-senones']
         
     aligner = MappedAligner.from_files(
         transition_model_path, tree_path, 
@@ -118,7 +119,7 @@ def initialize(config_dict):
         WordBoundaryInfoNewOpts(),
         word_boundary_path)
 
-    acoustic_model = FTDNNAcoustic()
+    acoustic_model = FTDNNAcoustic(num_senones=num_senones)
     acoustic_model.load_state_dict(torch.load(acoustic_model_path))
     acoustic_model.eval()
 
@@ -249,16 +250,17 @@ def merge_align(align_dir):
             line = f'{id}\t{align}\n'
             f.write(line)
 
-
 if __name__ == '__main__':
-    config_dict = load_config("configs/data_prep.yaml")
+    config_dict = load_config("configs/config_prep.yaml")
 
-    n_split = 40
-    conf_path = "kaldi/conf"
-    data_root_dir = "prep_data/"
-    data_dir = "data/"
+    n_split = config_dict["n-split"]
+    conf_path = config_dict["conf-path"]
+    data_root_dir = config_dict["data-root-dir"]
+    data_dir = config_dict["data-dir"]
+    exp_dir = config_dict["exp-dir"]
+    num_senones = config_dict["num-senones"]
+
     split_dir = f'{data_dir}/split'
-    exp_dir = 'exp'
     prob_dir = f'{exp_dir}/probs'
     align_dir = f'{exp_dir}/aligns'
 

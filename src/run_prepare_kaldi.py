@@ -24,7 +24,7 @@ def download_librispeech_models(librispeech_models_path):
         os.system("rm -f 0013_librispeech_v1_lm.tar.gz")
         os.system("rm -f 0013_librispeech_v1_extractor.tar.gz")
 
-def prepare_pytorch_models( , libri_chain_mdl_path, libri_chain_txt_path, acoustic_model_path):
+def prepare_pytorch_models(pytorch_models_path , libri_chain_mdl_path, libri_chain_txt_path, acoustic_model_path):
     #Convert librispeech acoustic model .mdl to .txt
     if not os.path.exists(libri_chain_txt_path):
         os.system("nnet3-copy --binary=false " + libri_chain_mdl_path + " " + libri_chain_txt_path)
@@ -56,10 +56,3 @@ def main(config_dict):
 
     #Prepare pytorch models
     prepare_pytorch_models(pytorch_models_path, libri_chain_mdl_path, libri_chain_txt_path, acoustic_model_path)
-
-
-if __name__ == "__main__":
-    librispeech_models_path
-    
-    
-    main(config_dict)

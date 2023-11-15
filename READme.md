@@ -16,6 +16,12 @@
         -v /data/codes/prep_ps_pykaldi:/data/codes/prep_ps_pykaldi \
         --name extract_feature prep/pykaldi-gpu:latest
     ```
+
+    ```
+    sudo nvidia-docker run -it --gpus '"device=0,1"' \
+        -v /data/codes/prep_ps_pykaldi:/data/codes/prep_ps_pykaldi \
+         prep/pykaldi-gpu:latest
+    ```
 3. Run (demo directory):
 
     ```

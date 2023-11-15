@@ -102,7 +102,7 @@ class Block(nn.Module):
         return x
 
 class GOPT(nn.Module):
-    def __init__(self, embed_dim, num_heads, depth, input_dim=84, max_length=50, num_phone=40):
+    def __init__(self, embed_dim, num_heads, depth, input_dim=84, max_length=50, num_phone=40, dropout=0.1):
         super().__init__()
         self.input_dim = input_dim
         self.embed_dim = embed_dim
@@ -115,7 +115,7 @@ class GOPT(nn.Module):
 
         self.pos_embed = nn.Parameter(torch.zeros(1, max_length+1, self.embed_dim))
         trunc_normal_(self.pos_embed, std=.02)
-
+        
         self.in_proj = nn.Linear(self.input_dim, embed_dim)
         self.linear = nn.Linear(embed_dim * 2, embed_dim)
         self.mlp_head_phn = nn.Sequential(
@@ -149,6 +149,7 @@ class GOPT(nn.Module):
 
         for blk in self.blocks:
             x = blk(x)
+
         u = self.mlp_head_utt(x[:, 0])
         p = self.mlp_head_phn(x[:, 1:])
         w = self.mlp_head_word(x[:, 1:])

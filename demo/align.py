@@ -75,19 +75,19 @@ def extract_features_using_kaldi(conf_path, wav_scp_path, spk2utt_path, mfcc_pat
             scp:' + feats_scp_path + ' ark:' + ivectors_path)
 
 def initialize(transition_model_path, tree_path, lang_graph_path, \
-    words_path, disam_path, phones_path, word_boundary_path, acoustic_model_path):
+    words_path, disam_path, phones_path, word_boundary_path, acoustic_model_path, num_senones):
 
     aligner = MappedAligner.from_files(
         transition_model_path, tree_path, 
         lang_graph_path, words_path,
-        disam_path, acoustic_scale=1.0)
+        disam_path, beam=40.0, acoustic_scale=1.0)
     
     phones  = SymbolTable.read_text(phones_path)
     word_boundary_info = WordBoundaryInfo.from_file(
         WordBoundaryInfoNewOpts(),
         word_boundary_path)
 
-    acoustic_model = FTDNNAcoustic()
+    acoustic_model = FTDNNAcoustic(num_senones=num_senones)
     acoustic_model.load_state_dict(torch.load(acoustic_model_path))
     acoustic_model.eval()
 
@@ -118,7 +118,7 @@ class Aligner(object):
         self.lang_graph_path = configs['lang-graph-path']
         self.words_path = configs['words-path']
         self.phones_path = configs['kaldi-phones-path']
-
+        self.num_senones = configs['num_senones']
 
         self.aligner, self.phones, self.word_boundary_info, self.acoustic_model = \
             initialize(
@@ -129,7 +129,8 @@ class Aligner(object):
                 disam_path=self.disam_path, 
                 phones_path=self.phones_path, 
                 word_boundary_path=self.word_boundary_path, 
-                acoustic_model_path=self.acoustic_model_path
+                acoustic_model_path=self.acoustic_model_path,
+                num_senones=self.num_senones
             )
         self.ivector_period = load_ivector_period_from_conf(self.conf_path)
 

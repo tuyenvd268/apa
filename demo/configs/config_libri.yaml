@@ -6,15 +6,16 @@ prob-path: 'exp/prob.ark'
 gop-path: 'exp/gop.pkl'
 align-path: 'exp/align.out'
 trans-dir: 'exp/'
+num_senones: 6024
 
 kaldi-models-path: "kaldi/"
-conf-path: "kaldi/conf"
+conf-path: "kaldi/conf_libri"
 torch-models-path: "kaldi/torch"
-kaldi-chain-mdl-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/final.mdl"
-kaldi-chain-txt-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/final.txt"
-transition-model-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/final.mdl"
-tree-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/tree"
-kaldi-phones-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp/phones.txt"
+kaldi-chain-mdl-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp_libri/final.mdl"
+kaldi-chain-txt-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp_libri/final.txt"
+transition-model-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp_libri/final.mdl"
+tree-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp_libri/tree"
+kaldi-phones-path: "kaldi/exp/chain_cleaned/tdnn_1d_sp_libri/phones.txt"
 
 disambig-path: "kaldi/data/lang_test_tgsmall/phones/disambig.int"
 word-boundary-path: "kaldi/data/lang_test_tgsmall/phones/word_boundary.int"
@@ -23,4 +24,4 @@ words-path: "kaldi/data/lang_test_tgsmall/words.txt"
 phones-pure-path: "kaldi/data/phones/phones-list.txt"
 phone-to-pure-phone-path: "kaldi/data/phones/phone-to-pure-phone.int"
 
-acoustic-model-path: "kaldi/torch/acoustic_model.pt"
+acoustic-model-path: "/data/codes/prep_ps_pykaldi/demo/kaldi/torch/acoustic_model.pt"
