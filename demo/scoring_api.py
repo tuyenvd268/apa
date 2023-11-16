@@ -161,7 +161,7 @@ if __name__ == "__main__":
     configs = load_config("configs/model.yaml")
 
     wavlm_ckpt_path = "/data/codes/prep_ps_pykaldi/pretrained/wavlm-base+.pt"
-    gopt_ckpt_path = "/data/codes/prep_ps_pykaldi/demo/ckpts-eph=48-mse=0.1187-prep/model.pt"
+    gopt_ckpt_path = "/data/codes/prep_ps_pykaldi/exp/ckpts/in_long_old/ckpts-eph=14-mse=0.16429999470710754/model.pt"
     phone_dict_path = "/data/codes/prep_ps_pykaldi/resources/phone_dict.json"
     
     score_model = Score_Model(
