@@ -117,7 +117,7 @@ class GOPT(nn.Module):
         trunc_normal_(self.pos_embed, std=.02)
         
         self.in_proj = nn.Linear(self.input_dim, embed_dim)
-        self.linear = nn.Linear(embed_dim * 2, embed_dim)
+        self.linear = nn.Linear(embed_dim * 3, embed_dim)
         self.mlp_head_phn = nn.Sequential(
             nn.LayerNorm(embed_dim), nn.Linear(embed_dim, 1))
 
@@ -126,21 +126,25 @@ class GOPT(nn.Module):
 
         self.num_phone = num_phone
         self.phn_proj = nn.Linear(num_phone, embed_dim)
+        self.cat_proj = nn.Linear(10, embed_dim)
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.mlp_head_utt = nn.Sequential(nn.LayerNorm(embed_dim), nn.Linear(embed_dim, 1))
 
         trunc_normal_(self.cls_token, std=.02)
 
-    def forward(self, x, phn):
+    def forward(self, x, phn, cat):
         B = x.shape[0]
         phn_one_hot = torch.nn.functional.one_hot(phn.long()+1, num_classes=self.num_phone).float()
         phn_embed = self.phn_proj(phn_one_hot)
 
+        cat_one_hot = torch.nn.functional.one_hot(cat.long(), num_classes=10).float()
+        cat_embed = self.cat_proj(cat_one_hot)
+
         if self.embed_dim != self.input_dim:
             x = self.in_proj(x)
 
-        x = torch.cat([x, phn_embed], dim=-1)
+        x = torch.cat([x, phn_embed, cat_embed], dim=-1)
         x = self.linear(x)
         
         cls_token = self.cls_token.expand(B, -1, -1)
